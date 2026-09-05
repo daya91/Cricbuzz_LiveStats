@@ -10,6 +10,12 @@ st.set_page_config(
 st.title("🏏 Cricbuzz LiveStats")
 st.subheader("Cricket Analytics Dashboard")
 from services.player_service import get_all_players, create_player, update_player, delete_player
+from services.match_service import (
+    get_all_matches,
+    create_match,
+    update_match,
+    delete_match,
+)
 from utils.db_connection import get_connection
 API_KEY = st.secrets["CRICKET_API_KEY"]
 
@@ -390,3 +396,326 @@ with st.form("create_player_form"):
 
             except Exception as e:
                 st.error(f"Unable to create player: {e}")
+# Match Management
+st.divider()
+st.header("🏏 Match Management")
+
+matches_db = get_all_matches()
+
+if matches_db:
+    st.subheader("All Matches")
+
+    for match in matches_db:
+        (
+            match_id,
+            series_id,
+            venue_id,
+            team1_id,
+            team1_name,
+            team2_id,
+            team2_name,
+            match_type,
+            match_date,
+            status,
+            winner_team_id,
+            win_margin,
+            victory_type,
+        ) = match
+
+        with st.container(border=True):
+            st.write(f"### {team1_name} vs {team2_name}")
+            st.write(f"**Match ID:** {match_id}")
+            st.write(f"**Match Type:** {match_type or 'N/A'}")
+            st.write(f"**Date:** {match_date or 'N/A'}")
+            st.write(f"**Status:** {status or 'N/A'}")
+
+            if winner_team_id:
+                winner_name = (
+                    team1_name
+                    if winner_team_id == team1_id
+                    else team2_name
+                )
+                st.write(
+                    f"**Winner:** {winner_name}"
+                )
+
+            if win_margin:
+                st.write(
+                    f"**Win Margin:** {win_margin} "
+                    f"{victory_type or ''}"
+                )
+
+else:
+    st.info("No matches found.")
+
+# Create Match
+st.subheader("➕ Create New Match")
+
+team_options = {
+    "India": 1,
+    "Australia": 2,
+    "England": 3,
+    "South Africa": 4,
+    "New Zealand": 5,
+}
+
+with st.form("create_match_form"):
+
+    match_id = st.number_input(
+        "Match ID",
+        min_value=1,
+        step=1,
+    )
+
+    team1_name = st.selectbox(
+        "Team 1",
+        list(team_options.keys()),
+    )
+
+    team2_name = st.selectbox(
+        "Team 2",
+        list(team_options.keys()),
+    )
+
+    match_type = st.selectbox(
+        "Match Type",
+        ["Test", "ODI", "T20", "T20I"],
+    )
+
+    match_date = st.date_input(
+        "Match Date",
+    )
+
+    status = st.selectbox(
+        "Status",
+        ["upcoming", "live", "completed"],
+    )
+
+    submitted = st.form_submit_button(
+        "Create Match"
+    )
+
+    if submitted:
+
+        if team1_name == team2_name:
+            st.error("Team 1 and Team 2 must be different.")
+
+        else:
+            try:
+                create_match(
+                    int(match_id),
+                    None,
+                    None,
+                    team_options[team1_name],
+                    team_options[team2_name],
+                    match_type,
+                    str(match_date),
+                    status,
+                    None,
+                    None,
+                    None,
+                )
+
+                st.success(
+                    f"Match '{team1_name} vs {team2_name}' "
+                    "created successfully!"
+                )
+
+                st.rerun()
+
+            except Exception as e:
+                st.error(
+                    f"Unable to create match: {e}"
+                )
+                # Edit Match
+st.divider()
+st.subheader("✏️ Edit Match")
+
+matches_db = get_all_matches()
+
+if matches_db:
+
+    edit_match_options = {
+        f"{match[4]} vs {match[6]} (ID: {match[0]})": match[0]
+        for match in matches_db
+    }
+
+    selected_edit_match = st.selectbox(
+        "Select Match to Edit",
+        list(edit_match_options.keys()),
+        key="edit_match_select"
+    )
+
+    selected_match_id = edit_match_options[selected_edit_match]
+
+    selected_match = next(
+        match for match in matches_db
+        if match[0] == selected_match_id
+    )
+
+    (
+        match_id,
+        series_id,
+        venue_id,
+        team1_id,
+        team1_name,
+        team2_id,
+        team2_name,
+        match_type,
+        match_date,
+        status,
+        winner_team_id,
+        win_margin,
+        victory_type,
+    ) = selected_match
+
+    team_options = {
+        "India": 1,
+        "Australia": 2,
+        "England": 3,
+        "South Africa": 4,
+        "New Zealand": 5,
+    }
+
+    team1_index = (
+        list(team_options.keys()).index(team1_name)
+        if team1_name in team_options
+        else 0
+    )
+
+    team2_index = (
+        list(team_options.keys()).index(team2_name)
+        if team2_name in team_options
+        else 0
+    )
+
+    match_types = ["Test", "ODI", "T20", "T20I"]
+    match_type_index = (
+        match_types.index(match_type)
+        if match_type in match_types
+        else 0
+    )
+
+    statuses = ["upcoming", "live", "completed"]
+    status_value = status.lower() if status else "upcoming"
+    status_index = (
+        statuses.index(status_value)
+        if status_value in statuses
+        else 0
+    )
+
+    with st.form("edit_match_form"):
+
+        edit_team1 = st.selectbox(
+            "Team 1",
+            list(team_options.keys()),
+            index=team1_index,
+        )
+
+        edit_team2 = st.selectbox(
+            "Team 2",
+            list(team_options.keys()),
+            index=team2_index,
+        )
+
+        edit_match_type = st.selectbox(
+            "Match Type",
+            match_types,
+            index=match_type_index,
+        )
+
+        edit_match_date = st.text_input(
+            "Match Date",
+            value=str(match_date or ""),
+        )
+
+        edit_status = st.selectbox(
+            "Status",
+            statuses,
+            index=status_index,
+        )
+
+        submitted_edit = st.form_submit_button(
+            "✏️ Update Match"
+        )
+
+        if submitted_edit:
+
+            if edit_team1 == edit_team2:
+
+                st.error(
+                    "Team 1 and Team 2 must be different."
+                )
+
+            else:
+
+                try:
+
+                    updated = update_match(
+                        match_id,
+                        series_id,
+                        venue_id,
+                        team_options[edit_team1],
+                        team_options[edit_team2],
+                        edit_match_type,
+                        edit_match_date,
+                        edit_status,
+                        winner_team_id,
+                        win_margin,
+                        victory_type,
+                    )
+
+                    if updated:
+
+                        st.success(
+                            "Match updated successfully!"
+                        )
+
+                        st.rerun()
+
+                    else:
+
+                        st.error("Match not found.")
+
+                except Exception as e:
+
+                    st.error(
+                        f"Unable to update match: {e}"
+                    )
+                    # Delete Match
+st.subheader("🗑️ Delete Match")
+
+matches_db = get_all_matches()
+
+if matches_db:
+
+    delete_match_options = {
+        f"{match[4]} vs {match[6]} (ID: {match[0]})": match[0]
+        for match in matches_db
+    }
+
+    delete_match_name = st.selectbox(
+        "Select Match to Delete",
+        list(delete_match_options.keys()),
+        key="delete_match_select"
+    )
+
+    if st.button("🗑️ Delete Match", type="secondary"):
+
+        selected_delete_id = delete_match_options[delete_match_name]
+
+        try:
+            deleted = delete_match(selected_delete_id)
+
+            if deleted:
+                st.success(
+                    "Match deleted successfully!"
+                )
+                st.rerun()
+            else:
+                st.error("Match not found.")
+
+        except Exception as e:
+            st.error(
+                f"Unable to delete match: {e}"
+            )
