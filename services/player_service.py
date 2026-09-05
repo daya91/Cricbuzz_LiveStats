@@ -65,3 +65,61 @@ def create_player(
 
     finally:
         connection.close()
+def update_player(
+    player_id,
+    player_name,
+    team_id,
+    role,
+    batting_style,
+    bowling_style,
+):
+    """Update an existing player record."""
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            """
+            UPDATE players
+            SET
+                player_name = ?,
+                team_id = ?,
+                role = ?,
+                batting_style = ?,
+                bowling_style = ?
+            WHERE player_id = ?
+            """,
+            (
+                player_name,
+                team_id,
+                role,
+                batting_style,
+                bowling_style,
+                player_id,
+            ),
+        )
+
+        connection.commit()
+
+        return cursor.rowcount
+
+    finally:
+        connection.close()
+def delete_player(player_id):
+    """Delete an existing player record."""
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            """
+            DELETE FROM players
+            WHERE player_id = ?
+            """,
+            (player_id,),
+        )
+
+        connection.commit()
+
+        return cursor.rowcount
+
+    finally:
+        connection.close()
