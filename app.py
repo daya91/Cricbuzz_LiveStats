@@ -7,7 +7,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("ðŸ Cricbuzz LiveStats")
+st.title("🏏 Cricbuzz LiveStats")
 st.subheader("Cricket Analytics Dashboard")
 from services.player_service import get_all_players, create_player, update_player, delete_player
 from services.match_service import (
@@ -173,7 +173,7 @@ except Exception as e:
     st.error("Unable to load cricket data: {e}")
 # Player Management
 st.divider()
-st.header("ðŸ‘¤ Player Management")
+st.header("Player Management")
 
 players = get_all_players()
 
@@ -344,7 +344,7 @@ if players:
         except Exception as e:
             st.error(f"Unable to delete player: {e}")
 # Create New Player
-st.subheader("âž• Create New Player")
+st.subheader("Create New Player")
 
 with st.form("create_player_form"):
 
@@ -455,7 +455,7 @@ else:
     st.info("No matches found.")
 
 # Create Match
-st.subheader("âž• Create New Match")
+st.subheader("Create New Match")
 
 team_options = {
     "India": 1,
@@ -933,3 +933,23 @@ if teams_db:
             st.error(f"Unable to delete team: {e}")
 else:
     st.info("No teams available to delete.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
