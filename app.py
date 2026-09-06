@@ -1,13 +1,13 @@
-import streamlit as st
+﻿import streamlit as st
 import requests
 
 st.set_page_config(
     page_title="Cricbuzz LiveStats",
-    page_icon="🏏",
+    page_icon="ðŸ",
     layout="wide"
 )
 
-st.title("🏏 Cricbuzz LiveStats")
+st.title("ðŸ Cricbuzz LiveStats")
 st.subheader("Cricket Analytics Dashboard")
 from services.player_service import get_all_players, create_player, update_player, delete_player
 from services.match_service import (
@@ -15,6 +15,12 @@ from services.match_service import (
     create_match,
     update_match,
     delete_match,
+)
+from services.team_service import (
+    get_all_teams,
+    create_team,
+    update_team,
+    delete_team,
 )
 from utils.db_connection import get_connection
 API_KEY = st.secrets["CRICKET_API_KEY"]
@@ -95,7 +101,7 @@ try:
     st.divider()
 
     # Filter
-    st.subheader("🏏 Matches")
+    st.subheader("ðŸ Matches")
 
     filter_option = st.selectbox(
         "Filter Matches",
@@ -142,7 +148,7 @@ try:
             scores = match.get("score", [])
 
             if scores:
-                st.write("#### 🏏 Score")
+                st.write("#### ðŸ Score")
 
                 for score in scores:
 
@@ -167,7 +173,7 @@ except Exception as e:
     st.error("Unable to load cricket data: {e}")
 # Player Management
 st.divider()
-st.header("👤 Player Management")
+st.header("ðŸ‘¤ Player Management")
 
 players = get_all_players()
 
@@ -202,7 +208,7 @@ else:
 
 
 # Edit Player
-st.subheader("✏️ Edit Player")
+st.subheader("âœï¸ Edit Player")
 
 player_ids = [player[0] for player in players]
 
@@ -303,7 +309,7 @@ if player_ids:
                     st.error(f"Unable to update player: {e}")
 
 # Delete Player
-st.subheader("🗑️ Delete Player")
+st.subheader("ðŸ—‘ï¸ Delete Player")
 
 players = get_all_players()
 
@@ -320,7 +326,7 @@ if players:
         key="delete_player_select"
     )
 
-    if st.button("🗑️ Delete Player", type="secondary"):
+    if st.button("ðŸ—‘ï¸ Delete Player", type="secondary"):
 
         selected_delete_id = delete_player_options[delete_player_name]
 
@@ -338,7 +344,7 @@ if players:
         except Exception as e:
             st.error(f"Unable to delete player: {e}")
 # Create New Player
-st.subheader("➕ Create New Player")
+st.subheader("âž• Create New Player")
 
 with st.form("create_player_form"):
 
@@ -398,7 +404,7 @@ with st.form("create_player_form"):
                 st.error(f"Unable to create player: {e}")
 # Match Management
 st.divider()
-st.header("🏏 Match Management")
+st.header("ðŸ Match Management")
 
 matches_db = get_all_matches()
 
@@ -449,7 +455,7 @@ else:
     st.info("No matches found.")
 
 # Create Match
-st.subheader("➕ Create New Match")
+st.subheader("âž• Create New Match")
 
 team_options = {
     "India": 1,
@@ -529,7 +535,7 @@ with st.form("create_match_form"):
                 )
                 # Edit Match
 st.divider()
-st.subheader("✏️ Edit Match")
+st.subheader("âœï¸ Edit Match")
 
 matches_db = get_all_matches()
 
@@ -636,7 +642,7 @@ if matches_db:
         )
 
         submitted_edit = st.form_submit_button(
-            "✏️ Update Match"
+            "âœï¸ Update Match"
         )
 
         if submitted_edit:
@@ -683,7 +689,7 @@ if matches_db:
                         f"Unable to update match: {e}"
                     )
                     # Delete Match
-st.subheader("🗑️ Delete Match")
+st.subheader("ðŸ—‘ï¸ Delete Match")
 
 matches_db = get_all_matches()
 
@@ -700,7 +706,7 @@ if matches_db:
         key="delete_match_select"
     )
 
-    if st.button("🗑️ Delete Match", type="secondary"):
+    if st.button("ðŸ—‘ï¸ Delete Match", type="secondary"):
 
         selected_delete_id = delete_match_options[delete_match_name]
 
@@ -719,3 +725,211 @@ if matches_db:
             st.error(
                 f"Unable to delete match: {e}"
             )
+            # Team Management
+st.divider()
+st.header("👥 Team Management")
+
+teams_db = get_all_teams()
+
+if teams_db:
+    st.subheader("All Teams")
+
+    for team in teams_db:
+        (
+            team_id,
+            team_name,
+            country,
+            team_type,
+        ) = team
+
+        with st.container(border=True):
+            st.write(f"### {team_name}")
+            st.write(f"**Team ID:** {team_id}")
+            st.write(f"**Country:** {country or 'N/A'}")
+            st.write(f"**Team Type:** {team_type or 'N/A'}")
+
+else:
+    st.info("No teams found.")
+
+# Create Team
+st.subheader("➕ Create New Team")
+
+with st.form("create_team_form"):
+
+    team_id = st.number_input(
+        "Team ID",
+        min_value=1,
+        step=1,
+    )
+
+    team_name = st.text_input(
+        "Team Name"
+    )
+
+    country = st.text_input(
+        "Country"
+    )
+
+    team_type = st.selectbox(
+        "Team Type",
+        ["International", "Domestic"],
+    )
+
+    submitted_team = st.form_submit_button(
+        "Create Team"
+    )
+
+    if submitted_team:
+
+        if not team_name.strip():
+            st.error("Team Name is required.")
+
+        elif not country.strip():
+            st.error("Country is required.")
+
+        else:
+            try:
+                create_team(
+                    int(team_id),
+                    team_name.strip(),
+                    country.strip(),
+                    team_type,
+                )
+
+                st.success(
+                    f"Team '{team_name}' created successfully!"
+                )
+
+                st.rerun()
+
+            except Exception as e:
+                st.error(
+                    f"Unable to create team: {e}"
+                )
+
+
+# Edit Team
+st.subheader("✏️ Edit Team")
+
+teams_db = get_all_teams()
+
+if teams_db:
+
+    edit_team_options = {
+        f"{team[1]} (ID: {team[0]})": team[0]
+        for team in teams_db
+    }
+
+    selected_edit_team = st.selectbox(
+        "Select Team to Edit",
+        list(edit_team_options.keys()),
+        key="edit_team_select",
+    )
+
+    selected_team_id = edit_team_options[selected_edit_team]
+
+    selected_team = next(
+        team for team in teams_db
+        if team[0] == selected_team_id
+    )
+
+    (
+        team_id,
+        team_name,
+        country,
+        team_type,
+    ) = selected_team
+
+    team_types = ["International", "Domestic"]
+
+    team_type_index = (
+        team_types.index(team_type)
+        if team_type in team_types
+        else 0
+    )
+
+    with st.form("edit_team_form"):
+
+        edit_team_name = st.text_input(
+            "Team Name",
+            value=team_name,
+        )
+
+        edit_country = st.text_input(
+            "Country",
+            value=country,
+        )
+
+        edit_team_type = st.selectbox(
+            "Team Type",
+            team_types,
+            index=team_type_index,
+        )
+
+        submitted_edit_team = st.form_submit_button(
+            "✏️ Update Team"
+        )
+
+        if submitted_edit_team:
+
+            if not edit_team_name.strip():
+                st.error("Team Name is required.")
+
+            elif not edit_country.strip():
+                st.error("Country is required.")
+
+            else:
+                try:
+
+                    updated = update_team(
+                        team_id,
+                        edit_team_name.strip(),
+                        edit_country.strip(),
+                        edit_team_type,
+                    )
+
+                    if updated:
+                        st.success(
+                            "Team updated successfully!"
+                        )
+                        st.rerun()
+
+                    else:
+                        st.error("Team not found.")
+
+                except Exception as e:
+                    st.error(
+                        f"Unable to update team: {e}"
+                    )
+                    st.subheader("🗑️ Delete Team")
+
+teams_db = get_all_teams()
+
+if teams_db:
+    team_options = {
+        f"{team[1]} (ID: {team[0]})": team[0]
+        for team in teams_db
+    }
+
+    selected_team = st.selectbox(
+        "Select Team to Delete",
+        list(team_options.keys()),
+        key="delete_team_select",
+    )
+
+    if st.button("Delete Team", key="delete_team_button"):
+        team_id = team_options[selected_team]
+
+        try:
+            deleted = delete_team(team_id)
+
+            if deleted:
+                st.success("Team deleted successfully!")
+                st.rerun()
+            else:
+                st.error("Team not found.")
+
+        except Exception as e:
+            st.error(f"Unable to delete team: {e}")
+else:
+    st.info("No teams available to delete.")
